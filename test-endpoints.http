@@ -1,0 +1,59 @@
+### Crear Cliente
+POST http://localhost:8081/api/clientes
+Content-Type: application/json
+
+{
+  "persona": {
+    "nombre": "Juan Pérez",
+    "identificacion": "DNI-123",
+    "genero": "M",
+    "edad": 30,
+    "direccion": "Calle Falsa 123",
+    "telefono": "999999999"
+  },
+  "password": "secret"
+}
+
+### Listar Clientes
+GET http://localhost:8081/api/clientes
+
+### Obtener Cliente
+GET http://localhost:8081/api/clientes/{{clienteId}}
+
+### Crear Cuenta
+@clienteId = b1f2c1a3-df58-4c94-b4b0-3da6720a1011
+POST http://localhost:8082/api/cuentas
+Content-Type: application/json
+
+{
+  "numeroCuenta": "ACC-001",
+  "tipo": "AHORROS",
+  "saldoInicial": 500.00,
+  "clienteId": "{{clienteId}}"
+}
+
+
+### Consultar Cuenta
+GET http://localhost:8082/api/cuentas/ACC-001
+
+### Registrar Depósito
+POST http://localhost:8082/api/movimientos
+Content-Type: application/json
+Idempotency-Key: 1111-2222-3333-4444
+
+{
+  "numeroCuenta": "ACC-001",
+  "tipo": "DEPOSITO",
+  "valor": 100.00
+}
+
+### Registrar Retiro
+POST http://localhost:8082/api/movimientos
+Content-Type: application/json
+Idempotency-Key: 5555-6666-7777-8888
+
+{
+  "numeroCuenta": "ACC-001",
+  "tipo": "RETIRO",
+  "valor": 50.00
+}

@@ -1,0 +1,85 @@
+services:
+  postgres-clientes:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: clientesdb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U app -d clientesdb" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - clientes_data:/var/lib/postgresql/data
+
+  postgres-cuentas:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cuentasdb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U app -d cuentasdb" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - cuentas_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  ms-clientes:
+    build: ../ms-clientes
+    depends_on:
+      postgres-clientes:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-clientes:5432/clientesdb
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres-clientes:5432/clientesdb
+      SPRING_FLYWAY_USER: app
+      SPRING_FLYWAY_PASSWORD: app
+      SERVER_PORT: "8081"
+    ports: [ "8081:8081" ]
+
+  ms-cuentas:
+    build: ../ms-cuentas
+    depends_on:
+      postgres-cuentas:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-cuentas:5432/cuentasdb
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres-cuentas:5432/cuentasdb
+      SPRING_FLYWAY_USER: app
+      SPRING_FLYWAY_PASSWORD: app
+      SERVER_PORT: "8082"
+    ports: [ "8082:8082" ]
+
+volumes:
+  clientes_data:
+  cuentas_data:
